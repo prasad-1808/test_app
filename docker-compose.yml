@@ -1,0 +1,62 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15
+    container_name: pern_postgres
+    restart: always
+    environment:
+      POSTGRES_USER: pern_user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: pern_app
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  backend:
+    build: ./server
+    container_name: pern_backend
+    restart: always
+    depends_on:
+      - postgres
+    environment:
+      PGUSER: pern_user
+      PGHOST: postgres
+      PGPASSWORD: password
+      PGDATABASE: pern_app
+      PGPORT: 5432
+      DATABASE_URL: "postgresql://pern_user:password@postgres:5432/pern_app"
+      PORT: 5000
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./server:/app
+      - /app/node_modules
+
+  frontend:
+    build: ./client
+    container_name: pern_frontend
+    restart: always
+    depends_on:
+      - backend
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./client:/app
+      - /app/node_modules
+  
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: pern_pgadmin
+    restart: always
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@example.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+    ports:
+      - "5050:80"
+    depends_on:
+      - postgres
+
+volumes:
+  pgdata:
